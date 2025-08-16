@@ -4,7 +4,11 @@ import { LayoutNode } from "../../models/layoutModel";
 import NavbarComponent from "../ui/NavbarComponent";
 import HeaderComponent from "../ui/HeaderComponent";
 import DroppableArea from "./DroppableArea";
-import { addComponentToLayout } from "../../controllers/builderController";
+import {
+  addComponentToLayout,
+  updateComponentProps,
+} from "../../controllers/builderController";
+import CardsSection from "../ui/CardsSection";
 
 interface CanvasProps {
   layout: LayoutNode[];
@@ -16,12 +20,42 @@ export default function Canvas({ layout, setLayout }: CanvasProps) {
     setLayout((prev) => addComponentToLayout(prev, type));
   };
 
+  const handleUpdate = (id: string, newProps: Record<string, unknown>) => {
+    setLayout((prev) => updateComponentProps(prev, id, newProps));
+  };
+
   const renderComponent = (node: LayoutNode) => {
     switch (node.type) {
       case "navbar":
-        return <NavbarComponent key={node.id} />;
+        return (
+          <NavbarComponent
+            key={node.id}
+            id={node.id}
+            brand={node.props?.brand || ""}
+            links={node.props?.links || []}
+            onUpdate={handleUpdate}
+          />
+        );
       case "header":
-        return <HeaderComponent key={node.id} />;
+        return (
+          <HeaderComponent
+            key={node.id}
+            id={node.id}
+            title={node.props?.title || ""}
+            subtitle={node.props?.subtitle || ""}
+            onUpdate={handleUpdate}
+          />
+        );
+      case "cardsContainer":
+        return (
+          <CardsSection
+            key={node.id}
+            id={node.id}
+            cards={node.props?.cards || []}
+            title={node.props?.containerTitle || ""}
+            onUpdate={handleUpdate}
+          />
+        );
       default:
         return null;
     }
