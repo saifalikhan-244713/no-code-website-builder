@@ -4,18 +4,21 @@ import {
   NavbarNode,
   CardsContainerNode,
 } from "../models/layoutModel";
+import { generateId } from "../utils/id";
 
 export const addComponentToLayout = (
   layout: LayoutNode[],
   componentType: LayoutNode["type"]
 ): LayoutNode[] => {
-  const id = Date.now().toString();
+  const id = generateId(componentType);
+  const order = layout.length;
 
   switch (componentType) {
     case "header": {
       const node: HeaderNode = {
         id,
         type: "header",
+        order,
         props: {
           title: "Welcome to My Website",
           subtitle: "This is a customizable header section",
@@ -28,6 +31,7 @@ export const addComponentToLayout = (
       const node: NavbarNode = {
         id,
         type: "navbar",
+        order,
         props: {
           brand: "My Website",
           links: ["Home", "About"],
@@ -40,6 +44,7 @@ export const addComponentToLayout = (
       const node: CardsContainerNode = {
         id,
         type: "cardsContainer",
+        order,
         props: {
           containerTitle: "Our Features",
           cards: [

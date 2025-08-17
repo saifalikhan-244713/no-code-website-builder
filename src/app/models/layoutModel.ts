@@ -2,6 +2,7 @@
 export interface BaseNode {
   id: string;
   type: string;
+  order: number;
 }
 
 export interface HeaderNode extends BaseNode {
