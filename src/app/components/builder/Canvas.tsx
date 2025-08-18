@@ -24,40 +24,71 @@ export default function Canvas({
 }) {
   const [loading, setLoading] = useState(true);
 
+  const getToken = () => localStorage.getItem("token");
+
   // --- Fetch or create layout on mount ---
   useEffect(() => {
     const fetchOrCreateLayout = async () => {
+      const token = getToken();
+      if (!token) {
+        window.location.href = "/login"; // redirect if not logged in
+        return;
+      }
+
       try {
+        // if siteId already exists in localStorage, fetch that
         if (!siteId) {
-          // check localStorage first
           const storedId = localStorage.getItem("siteId");
           if (storedId) {
             setSiteId(storedId);
-            const res = await fetch(`/api/layout/${storedId}`);
+            const res = await fetch(`/api/layout/${storedId}`, {
+              headers: { Authorization: `Bearer ${token}` },
+            });
             const data = await res.json();
             if (!data.error) setLayout(data.layout || []);
             setLoading(false);
             return;
           }
 
-          // first-time creation
+          // fetch last layout for this user
+          // fetch last layout for this user
+          const userLayoutsRes = await fetch("/api/layout", {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          const userLayouts = await userLayoutsRes.json();
+
+          if (Array.isArray(userLayouts) && userLayouts.length > 0) {
+            const lastLayout = userLayouts[0]; // latest layout now guaranteed
+            setSiteId(lastLayout._id);
+            localStorage.setItem("siteId", lastLayout._id);
+            setLayout(lastLayout.layout || []);
+            setLoading(false);
+            return;
+          }
+
+          // create new layout if none exist
           const res = await fetch("/api/layout", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
             body: JSON.stringify({ name: "Untitled Page", layout: [] }),
           });
           const newLayout = await res.json();
           if (!newLayout._id) throw new Error("Failed to create layout");
 
           setSiteId(newLayout._id);
-          localStorage.setItem("siteId", newLayout._id); // save for refresh
+          localStorage.setItem("siteId", newLayout._id);
           setLayout(newLayout.layout || []);
           setLoading(false);
           return;
         }
 
-        // fetch existing layout
-        const res = await fetch(`/api/layout/${siteId}`);
+        // fetch existing layout by siteId
+        const res = await fetch(`/api/layout/${siteId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         const data = await res.json();
         if (!data.error) setLayout(data.layout || []);
       } catch (err) {
@@ -73,17 +104,23 @@ export default function Canvas({
   useEffect(() => {
     if (loading || !siteId) return;
 
+    const token = getToken();
+    if (!token) return;
+
     const timeout = setTimeout(async () => {
       try {
         await fetch(`/api/layout/${siteId}`, {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
           body: JSON.stringify({ layout }),
         });
       } catch (err) {
         console.error("Failed to save layout", err);
       }
-    }, 1000); // debounce saving
+    }, 1000);
 
     return () => clearTimeout(timeout);
   }, [layout, siteId, loading]);
@@ -137,7 +174,7 @@ export default function Canvas({
   if (loading) return <p>Loading...</p>;
 
   return (
-    <main className="w-[70%] bg-gray-50 p-4">
+    <main className="w-full h-full bg-gray-50 p-4">
       <DroppableArea onDrop={onDrop}>
         {layout.length === 0 ? (
           <div className="grid h-[calc(100vh-2rem)] place-items-center text-center text-gray-500">

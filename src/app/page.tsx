@@ -2,6 +2,7 @@
 
 import Sidebar from "./components/builder/Sidebar";
 import Canvas from "./components/builder/Canvas";
+import LogoutButton from "./components/ui/LogoutButton";
 import { useCallback, useState } from "react";
 import type { LayoutNode } from "./models/layoutModel";
 import { DndProvider } from "react-dnd";
@@ -14,14 +15,25 @@ export default function HomePage() {
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <div className="flex h-screen">
+      <div className="flex h-screen w-full">
         <Sidebar />
-        <Canvas
-          siteId={siteId} // ✅ pass siteId
-          setSiteId={setSiteId} // ✅ so Canvas can update it
-          layout={layout}
-          setLayout={setLayout}
-        />
+
+        <div className="flex flex-col flex-1 w-full h-full">
+          {/* ✅ Top bar with logout */}
+          <div className="flex justify-end p-4 border-b">
+            <LogoutButton />
+          </div>
+
+          {/* ✅ Canvas takes full remaining space */}
+          <div className="flex-1 overflow-auto !w-full">
+            <Canvas
+              siteId={siteId}
+              setSiteId={setSiteId}
+              layout={layout}
+              setLayout={setLayout}
+            />
+          </div>
+        </div>
       </div>
     </DndProvider>
   );

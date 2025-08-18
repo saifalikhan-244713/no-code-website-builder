@@ -8,18 +8,27 @@ export async function POST(req: NextRequest) {
 
   try {
     const token = req.headers.get("Authorization")?.replace("Bearer ", "");
-    if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!token)
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const decoded: any = verifyToken(token);
-    if (!decoded?.userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!decoded?.userId)
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const { name, layout } = await req.json();
-    const newLayout = await Layout.create({ name, layout, userId: decoded.userId });
+    const newLayout = await Layout.create({
+      name,
+      layout,
+      userId: decoded.userId,
+    });
 
     return NextResponse.json(newLayout);
   } catch (err) {
     console.error("Failed to create layout:", err);
-    return NextResponse.json({ error: "Failed to create layout" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to create layout" },
+      { status: 500 }
+    );
   }
 }
 
@@ -28,16 +37,24 @@ export async function GET(req: NextRequest) {
 
   try {
     const token = req.headers.get("Authorization")?.replace("Bearer ", "");
-    if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!token)
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const decoded: any = verifyToken(token);
-    if (!decoded?.userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!decoded?.userId)
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    // Fetch only layouts for this user
-    const layouts = await Layout.find({ userId: decoded.userId });
+    // Get layouts for user, sorted by updatedAt descending (latest first)
+    const layouts = await Layout.find({ userId: decoded.userId }).sort({
+      updatedAt: -1,
+    });
+
     return NextResponse.json(layouts);
   } catch (err) {
     console.error("Failed to fetch layouts:", err);
-    return NextResponse.json({ error: "Failed to fetch layouts" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to fetch layouts" },
+      { status: 500 }
+    );
   }
 }
